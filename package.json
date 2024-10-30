@@ -1,0 +1,15 @@
+{
+  "name": "connectcajusms",
+  "version": "1.0.0",
+  "description": "An SMS notification and audit trail system for the Connect Caju project.",
+  "main": "sendSMS.js",
+  "scripts": {
+    "start": "node sendSMS.js"
+  },
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "mongodb": "^4.3.0",
+    "your-sms-api-client": "^1.0.0" // Replace with the actual SMS API library
+  },
+  "license": "MIT"
+}
