@@ -2,7 +2,7 @@ require('dotenv').config();
 const axios = require('axios');
 
 // MongoDB client setup
-const mongoClient = new MongoClient(process.env.MONGODB_URI);
+const mongoClient = new MongoClient(process.env.CONNECTION_STRING);
 
 async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDelivery) {
   const message = `Hello ${name}, your shipment is currently ${shipmentStatus}. It is now at ${currentLocation} and is expected to arrive by ${estimatedDelivery}.`;
