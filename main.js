@@ -3,7 +3,10 @@ require('dotenv').config();
 
 const watchCollection = require("./watchCollection");
 
-const logToAuditTrail = async (client, messageDetails) => {
+const uri = process.env.CONNECTION_STRING;
+const client = new MongoClient(uri);
+
+const logToAuditTrail = async (messageDetails) => {
     try {
         const auditCollection = client.db(process.env.DB).collection("AuditTrail");
         await auditCollection.insertOne({
@@ -18,20 +21,22 @@ const logToAuditTrail = async (client, messageDetails) => {
     }
 };
 
-try {
-    const uri = process.env.CONNECTION_STRING;
-    const client = new MongoClient(uri);
-    const collectionName = 'Shipment';
-    const database = client.db(process.env.DB);
-    const collection = database.collection(collectionName);
+async function main() {
+    try {
+        await client.connect();
+        const collectionName = 'Shipment';
+        const database = client.db(process.env.DB);
+        const collection = database.collection(collectionName);
 
-    // Pass a callback for logging to audit trail
-    watchCollection.watchCollection(collection, async (messageDetails) => {
-        await logToAuditTrail(client, messageDetails);
-    });
-} catch (error) {
-    console.error("Error Connecting to Database", error);
+        // Pass a callback for logging to audit trail
+        watchCollection.watchCollection(collection, logToAuditTrail);
+    } catch (error) {
+        console.error("Error Connecting to Database", error);
+    }
 }
+
+// Start the main function
+main();
 
 process.on('SIGINT', async () => {
     console.log("Closing MongoDB connection");
