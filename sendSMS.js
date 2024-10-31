@@ -1,6 +1,9 @@
 require('dotenv').config();
 const axios = require('axios');
 
+// MongoDB client setup
+const mongoClient = new MongoClient(process.env.MONGODB_URI);
+
 async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDelivery) {
   const message = `Hello ${name}, your shipment is currently ${shipmentStatus}. It is now at ${currentLocation} and is expected to arrive by ${estimatedDelivery}.`;
 
@@ -20,10 +23,38 @@ async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDeliv
       }
     );
 
+    // Log success to MongoDB
+    await mongoClient.connect();
+    const db = mongoClient.db(process.env.DB);
+    await db.collection('AuditTrail').insertOne({
+      timestamp: new Date(),
+      action: 'SMS Sent',
+      details: {
+        message,
+        to,
+        status: response.data.status
+      }
+    });
+
     console.log(`SMS sent to ${to}:`, response.data);
     return { status: 'success', response: response.data };
   } catch (error) {
     console.error('Error sending SMS:', error);
+
+    // Log failure to MongoDB
+    await mongoClient.connect();
+    const db = mongoClient.db(process.env.DB);
+    await db.collection('AuditTrail').insertOne({
+      timestamp: new Date(),
+      action: 'SMS Failed',
+      details: {
+        message,
+        to,
+        error: error.message
+      }
+    });
+  } finally {
+    await mongoClient.close();
     return { status: 'error', error: error.message };
   }
 }
