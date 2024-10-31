@@ -2,12 +2,8 @@ require('dotenv').config();
 const { MongoClient } = require('mongodb');
 const axios = require('axios');
 
-// Environment variables
-const smsApiKey = process.env.SMS_API_KEY;
-const mongoUri = process.env.MONGODB_URI;
-
 // MongoDB client setup
-const mongoClient = new MongoClient(mongoUri);
+const mongoClient = new MongoClient(process.env.MONGODB_URI);
 
 async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDelivery) {
   const message = `Hello ${name}, your shipment is currently ${shipmentStatus}. ` +
@@ -24,7 +20,7 @@ async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDeliv
       },
       {
         headers: {
-          'Authorization': `Bearer ${smsApiKey}`,
+          'Authorization': `Bearer ${process.env.SMS_API_KEY}`,
           'Content-Type': 'application/json'
         }
       }
@@ -32,7 +28,7 @@ async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDeliv
 
     // Log success to MongoDB
     await mongoClient.connect();
-    const db = mongoClient.db('ConnectCajuTestingDB');
+    const db = mongoClient.db(process.env.DB);
     await db.collection('AuditTrail').insertOne({
       timestamp: new Date(),
       action: 'SMS Sent',
@@ -49,7 +45,7 @@ async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDeliv
 
     // Log failure to MongoDB
     await mongoClient.connect();
-    const db = mongoClient.db('ConnectCajuTestingDB');
+    const db = mongoClient.db(process.env.DB);
     await db.collection('AuditTrail').insertOne({
       timestamp: new Date(),
       action: 'SMS Failed',
