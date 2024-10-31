@@ -1,27 +1,34 @@
 require('dotenv').config();
 const { MongoClient } = require('mongodb');
+const axios = require('axios');
 
-// Replace this with the appropriate client initialization for your chosen SMS API
-const smsClient = require('your-sms-api-client'); // Replace 'your-sms-api-client' with the actual SMS API library
-
-const accountSid = process.env.SMS_API_ACCOUNT_SID;
-const authToken = process.env.SMS_API_AUTH_TOKEN;
+// Environment variables
+const smsApiKey = process.env.SMS_API_KEY;
 const mongoUri = process.env.MONGODB_URI;
 
-// Initialize SMS API client
-const client = smsClient(accountSid, authToken);
+// MongoDB client setup
+const mongoClient = new MongoClient(mongoUri);
 
-async function sendSMS(to, message) {
-  // Declare mongoClient within the function scope
-  const mongoClient = new MongoClient(mongoUri);
+async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDelivery) {
+  const message = `Hello ${name}, your shipment is currently ${shipmentStatus}. ` +
+                  `It is now at ${currentLocation} and is expected to arrive by ${estimatedDelivery}.`;
 
   try {
-    // Send SMS via chosen API
-    const response = await client.messages.create({
-      body: message,
-      to: to,             
-      from: process.env.SMS_API_PHONE_NUMBER  // Ensure this is set in your .env file
-    });
+    // Send SMS via sms.to API
+    const response = await axios.post(
+      'https://api.sms.to/sms/send',
+      {
+        to: to,
+        message: message,
+        sender_id: 'YourSenderID'
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${smsApiKey}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
 
     // Log success to MongoDB
     await mongoClient.connect();
@@ -32,11 +39,11 @@ async function sendSMS(to, message) {
       details: {
         message,
         to,
-        status: response.status
+        status: response.data.status
       }
     });
-    
-    console.log(`SMS sent to ${to}:`, response.sid);
+
+    console.log(`SMS sent to ${to}:`, response.data);
   } catch (error) {
     console.error('Error sending SMS:', error);
 
@@ -53,10 +60,9 @@ async function sendSMS(to, message) {
       }
     });
   } finally {
-    // Ensure MongoDB client is closed in all cases
     await mongoClient.close();
   }
 }
 
 // Example usage
-sendSMS('+1234567890', 'Your shipment has been dispatched.');
+sendSMS('+1234567890', 'John Doe', 'in transit', 'City B', '5 PM');
