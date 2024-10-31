@@ -25,9 +25,9 @@ try {
     const database = client.db(process.env.DB);
     const collection = database.collection(collectionName);
 
-    // Start watching the collection
+    // Pass a callback for logging to audit trail
     watchCollection.watchCollection(collection, async (messageDetails) => {
-        await logToAuditTrail(client, messageDetails); // Call to log the action
+        await logToAuditTrail(client, messageDetails);
     });
 } catch (error) {
     console.error("Error Connecting to Database", error);
