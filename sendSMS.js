@@ -1,7 +1,7 @@
 require('dotenv').config();
 const axios = require('axios');
+const { MongoClient } = require('mongodb');
 
-// MongoDB client setup
 const mongoClient = new MongoClient(process.env.CONNECTION_STRING);
 
 async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDelivery) {
@@ -13,7 +13,7 @@ async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDeliv
       {
         to: to,
         message: message,
-        sender_id: 'YourSenderID'  // Optional, configurable based on SMS.to settings
+        sender_id: 'YourSenderID' // Optional, configurable based on SMS.to settings
       },
       {
         headers: {
@@ -24,7 +24,7 @@ async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDeliv
     );
 
     // Log success to MongoDB
-    await mongoClient.connect();
+    if (!mongoClient.isConnected) await mongoClient.connect();
     const db = mongoClient.db(process.env.DB);
     await db.collection('AuditTrail').insertOne({
       timestamp: new Date(),
@@ -42,7 +42,7 @@ async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDeliv
     console.error('Error sending SMS:', error);
 
     // Log failure to MongoDB
-    await mongoClient.connect();
+    if (!mongoClient.isConnected) await mongoClient.connect();
     const db = mongoClient.db(process.env.DB);
     await db.collection('AuditTrail').insertOne({
       timestamp: new Date(),
@@ -53,9 +53,11 @@ async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDeliv
         error: error.message
       }
     });
-  } finally {
-    await mongoClient.close();
+
     return { status: 'error', error: error.message };
+  } finally {
+    // Ensure connection is closed if open
+    if (mongoClient.isConnected) await mongoClient.close();
   }
 }
 
