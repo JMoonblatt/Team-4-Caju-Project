@@ -9,8 +9,7 @@
   "dependencies": {
     "axios": "^0.27.2",
     "dotenv": "^10.0.0",
-    "mongodb": "^4.3.0",
-    "your-sms-api-client": "^1.0.0"
+    "mongodb": "^4.3.0"
   },
   "license": "MIT"
 }
