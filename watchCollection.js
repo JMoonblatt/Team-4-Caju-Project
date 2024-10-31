@@ -28,13 +28,4 @@ async function watchCollection(collection) {
   
 }
 
-function handleShipmentDocument(change) {
-  console.log('New document inserted:', change.fullDocument);
-  const locations = change.fullDocument.origins.push(change.fullDocument.destination);
-  return locations;
-  // query.findUser(locations, collection)
-  // console.log(change.fullDocument.origins);
-  // console.log(change.fullDocument.destination);
-}
-
 module.exports = { watchCollection };
