@@ -1,31 +1,41 @@
+const { sendSMS } = require('./sendSMS');
 
-const query = require("./query.js");
+function watchCollection(collection) {
+    function startWatching() {
+        console.log("Watching for inserts...");
 
-async function watchCollection(collection) {
+        const changeStream = collection.watch();
 
-  try {
+        changeStream.on("change", (change) => {
+            console.log("Change detected:", change);
 
-    // Set up change stream to watch for inserts
-    const changeStream = collection.watch([{ $match: { 'operationType': 'insert' } }]);
+            if (change.operationType === 'insert') {
+                const { name, phone, status, currentLocation, estimatedDelivery } = change.fullDocument;
+                sendSMS(phone, name, status, currentLocation, estimatedDelivery)
+                    .then(result => {
+                        console.log("SMS Result:", result);
+                    })
+                    .catch(error => {
+                        console.error("Failed to send SMS:", error);
+                    });
+            }
+        });
 
-    // Set up listener to handle the change event
-    changeStream.on('change', (change) => {
-      if (collection.collectionName === 'Shipment') {
-        query.findUser(change, collection);
-      }
-    });
+        changeStream.on("error", (error) => {
+            console.error("Error in change stream:", error);
+            if (error.message.includes("Use of expired sessions")) {
+                console.log("Change stream closed, attempting to reconnect...");
+                setTimeout(startWatching, 1000); // Reconnect after 1 second
+            }
+        });
 
-    console.log("Watching for inserts...");
-    
-    changeStream.on('close', async () => {
-        console.log("Change stream closed, attempting to reconnect...");
-        await watchCollection(collection);
-      });
-  } catch (error) {
-    console.error("Error watching collection:", error);
-  }
+        changeStream.on("close", () => {
+            console.log("Change stream closed, attempting to reconnect...");
+            setTimeout(startWatching, 1000); // Reconnect after 1 second
+        });
+    }
 
-  
+    startWatching();
 }
 
 module.exports = { watchCollection };
