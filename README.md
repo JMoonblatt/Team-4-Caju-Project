@@ -9,7 +9,7 @@ This project monitors shipment data from a MongoDB database and sends SMS notifi
    ```bash
    npm install
    ```
-3. **Create a `.env` file** in the root directory and add the following:
+3. **Edit the `.env` file** in the root directory and add the following:
    ```plaintext
    CONNECTION_STRING=mongodb+srv://username:password@yourcluster.mongodb.net/
    DB=ConnectCajuTestingDB
