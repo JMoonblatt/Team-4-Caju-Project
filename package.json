@@ -9,7 +9,7 @@
   "dependencies": {
     "dotenv": "^10.0.0",
     "mongodb": "^4.3.0",
-    "your-sms-api-client": "^1.0.0" // Replace with the actual SMS API library
+    "your-sms-api-client": "^1.0.0"
   },
   "license": "MIT"
 }

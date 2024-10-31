@@ -8,8 +8,7 @@ async function watchCollection(collection) {
 
     // Set up listener to handle the change event
     changeStream.on('change', (change) => {
-      return change;
-      //handleNewDocument(change);
+      handleNewDocument(change);
     });
 
     console.log("Watching for inserts...");
@@ -26,8 +25,9 @@ async function watchCollection(collection) {
 }
 
 function handleNewDocument(change) {
-  console.log('New document inserted:', change.fullDocument)
-  return change;
+  console.log('New document inserted:', change.fullDocument);
+  console.log(change.fullDocument.origins);
+  console.log(change.fullDocument.destination);
 }
 
 module.exports = { watchCollection };
