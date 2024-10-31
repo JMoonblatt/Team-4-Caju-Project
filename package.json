@@ -1,12 +1,13 @@
 {
-  "name": "connectcajusms",
+  "name": "ConnectCaju",
   "version": "1.0.0",
-  "description": "An SMS notification and audit trail system for the Connect Caju project.",
-  "main": "sendSMS.js",
+  "description": "Connect Caju SMS Notification Service",
+  "main": "main.js",
   "scripts": {
-    "start": "node sendSMS.js"
+    "start": "node main.js"
   },
   "dependencies": {
+    "axios": "^0.27.2",
     "dotenv": "^10.0.0",
     "mongodb": "^4.3.0",
     "your-sms-api-client": "^1.0.0"
