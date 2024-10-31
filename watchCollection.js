@@ -1,33 +1,24 @@
+const { sendSMS } = require('./sendSMS');
 
-async function watchCollection(collection) {
+function watchCollection(collection) {
+  const changeStream = collection.watch();
 
-  try {
-
-    // Set up change stream to watch for inserts
-    const changeStream = collection.watch([{ $match: { 'operationType': 'insert' } }]);
-
-    // Set up listener to handle the change event
-    changeStream.on('change', (change) => {
-      return change;
-      //handleNewDocument(change);
-    });
-
-    console.log("Watching for inserts...");
+  changeStream.on('change', (change) => {
+    console.log("Change detected:", change);
     
-    changeStream.on('close', async () => {
-        console.log("Change stream closed, attempting to reconnect...");
-        await watchCollection(collection);
-      });
-  } catch (error) {
-    console.error("Error watching collection:", error);
-  }
-
-  
-}
-
-function handleNewDocument(change) {
-  console.log('New document inserted:', change.fullDocument)
-  return change;
+    if (change.operationType === 'update' && change.updateDescription.updatedFields.status) {
+      const { name, phone, status, currentLocation, estimatedDelivery } = change.fullDocument;
+      
+      // Call sendSMS function
+      sendSMS(phone, name, status, currentLocation, estimatedDelivery)
+        .then(result => {
+          console.log("SMS Result:", result);
+        })
+        .catch(error => {
+          console.error("Failed to send SMS:", error);
+        });
+    }
+  });
 }
 
 module.exports = { watchCollection };

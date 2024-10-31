@@ -1,22 +1,19 @@
 require('dotenv').config();
-const { MongoClient } = require('mongodb');
 const axios = require('axios');
 
 // MongoDB client setup
 const mongoClient = new MongoClient(process.env.MONGODB_URI);
 
 async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDelivery) {
-  const message = `Hello ${name}, your shipment is currently ${shipmentStatus}. ` +
-                  `It is now at ${currentLocation} and is expected to arrive by ${estimatedDelivery}.`;
+  const message = `Hello ${name}, your shipment is currently ${shipmentStatus}. It is now at ${currentLocation} and is expected to arrive by ${estimatedDelivery}.`;
 
   try {
-    // Send SMS via sms.to API
     const response = await axios.post(
       'https://api.sms.to/sms/send',
       {
         to: to,
         message: message,
-        sender_id: 'YourSenderID'
+        sender_id: 'YourSenderID'  // Optional, configurable based on SMS.to settings
       },
       {
         headers: {
@@ -40,6 +37,7 @@ async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDeliv
     });
 
     console.log(`SMS sent to ${to}:`, response.data);
+    return { status: 'success', response: response.data };
   } catch (error) {
     console.error('Error sending SMS:', error);
 
@@ -57,8 +55,8 @@ async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDeliv
     });
   } finally {
     await mongoClient.close();
+    return { status: 'error', error: error.message };
   }
 }
 
-// Example usage
-sendSMS('+1234567890', 'John Doe', 'in transit', 'City B', '5 PM');
+module.exports = { sendSMS };
