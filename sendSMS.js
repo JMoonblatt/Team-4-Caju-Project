@@ -2,12 +2,25 @@ require('dotenv').config();
 const axios = require('axios');
 const { MongoClient } = require('mongodb');
 
-const mongoClient = new MongoClient(process.env.CONNECTION_STRING);
+// Initialize MongoDB client outside the function to avoid multiple connections
+let mongoClient;
+
+async function connectToMongoDB() {
+  if (!mongoClient) {
+    mongoClient = new MongoClient(process.env.CONNECTION_STRING, { useUnifiedTopology: true });
+    await mongoClient.connect();
+  }
+}
 
 async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDelivery) {
   const message = `Hello ${name}, your shipment is currently ${shipmentStatus}. It is now at ${currentLocation} and is expected to arrive by ${estimatedDelivery}.`;
 
   try {
+    // Connect to MongoDB if not already connected
+    await connectToMongoDB();
+    console.log("Connected to MongoDB");
+
+    // Send SMS through SMS.to API
     const response = await axios.post(
       'https://api.sms.to/sms/send',
       {
@@ -23,8 +36,9 @@ async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDeliv
       }
     );
 
+    console.log(`SMS sent to ${to}:`, response.data);
+
     // Log success to MongoDB
-    if (!mongoClient.isConnected) await mongoClient.connect();
     const db = mongoClient.db(process.env.DB);
     await db.collection('AuditTrail').insertOne({
       timestamp: new Date(),
@@ -36,13 +50,12 @@ async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDeliv
       }
     });
 
-    console.log(`SMS sent to ${to}:`, response.data);
     return { status: 'success', response: response.data };
+
   } catch (error) {
-    console.error('Error sending SMS:', error);
+    console.error('Error sending SMS:', error.message);
 
     // Log failure to MongoDB
-    if (!mongoClient.isConnected) await mongoClient.connect();
     const db = mongoClient.db(process.env.DB);
     await db.collection('AuditTrail').insertOne({
       timestamp: new Date(),
@@ -56,8 +69,7 @@ async function sendSMS(to, name, shipmentStatus, currentLocation, estimatedDeliv
 
     return { status: 'error', error: error.message };
   } finally {
-    // Ensure connection is closed if open
-    if (mongoClient.isConnected) await mongoClient.close();
+    console.log("Operation complete.");
   }
 }
 
