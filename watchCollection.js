@@ -1,4 +1,6 @@
 
+const query = require("./query.js");
+
 async function watchCollection(collection) {
 
   try {
@@ -8,7 +10,9 @@ async function watchCollection(collection) {
 
     // Set up listener to handle the change event
     changeStream.on('change', (change) => {
-      handleNewDocument(change);
+      if (collection.collectionName === 'Shipment') {
+        query.findUser(change, collection);
+      }
     });
 
     console.log("Watching for inserts...");
@@ -24,10 +28,13 @@ async function watchCollection(collection) {
   
 }
 
-function handleNewDocument(change) {
+function handleShipmentDocument(change) {
   console.log('New document inserted:', change.fullDocument);
-  console.log(change.fullDocument.origins);
-  console.log(change.fullDocument.destination);
+  const locations = change.fullDocument.origins.push(change.fullDocument.destination);
+  return locations;
+  // query.findUser(locations, collection)
+  // console.log(change.fullDocument.origins);
+  // console.log(change.fullDocument.destination);
 }
 
 module.exports = { watchCollection };
